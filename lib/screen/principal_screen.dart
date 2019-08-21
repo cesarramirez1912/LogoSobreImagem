@@ -4,6 +4,7 @@ import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:teste_app/rest/bloc.dart';
+import 'package:flutter_xlider/flutter_xlider.dart';
 
 class PrincipalScreen extends StatelessWidget {
   BlocImagem _blocImagem = BlocImagem();
@@ -25,18 +26,65 @@ class PrincipalScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: <Widget>[
-            Stack(
-              children: <Widget>[
-                StreamFundoImagem(),
-                StreamLogoImagem(),
-              ],
+      body: Column(
+        children: <Widget>[
+          Stack(
+            children: <Widget>[
+              StreamFundoImagem(_alturaTela),
+              StreamLogoImagem(),
+            ],
+          ),
+          Container(
+            width:_larguraTela,
+            height: _alturaTela-380,
+            child: SingleChildScrollView(
+                child: Column(
+                  children: <Widget>[
+                   LinhaSlider(),
+                  ],
+                ),
             ),
-          ],
-        ),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+          ),
+        ],
+      ),
+    );
+  }
+
+  LinhaSlider(){
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: IconButton(
+              icon: Icon(Icons.arrow_back_ios,size: 14,),
+              onPressed: (){
+
+              },
+            ),
+          ),
+          Expanded(
+            child: FlutterSlider(
+              values: [50],
+              max: 100,
+              min: 0,
+              onDragging: (handlerIndex, lowerValue, upperValue) {
+                print(lowerValue);
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: IconButton(
+              icon: Icon(Icons.arrow_forward_ios,size: 14),
+              onPressed: (){
+
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -103,7 +151,7 @@ class PrincipalScreen extends StatelessWidget {
         });
   }
 
-  StreamFundoImagem() {
+  StreamFundoImagem(double altura) {
     return StreamBuilder(
         stream: _blocImagem.imagemFundoStream,
         builder: (BuildContext context, AsyncSnapshot<File> snapshot) {
