@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,7 +10,8 @@ class PrincipalScreen extends StatelessWidget {
 
   Offset position = Offset(0.0, 20.0);
   double width = 100.0, height = 100.0;
-
+  double dimensao;
+  File imagemLogo;
   @override
   Widget build(BuildContext context) {
     double _larguraTela = MediaQuery.of(context).size.width;
@@ -40,7 +40,16 @@ class PrincipalScreen extends StatelessWidget {
             child: SingleChildScrollView(
                 child: Column(
                   children: <Widget>[
-                   LinhaSlider(),
+                    Padding(
+                      padding: EdgeInsets.only(top: 10),
+                      child: Text('Tamanho Logo'),
+                    ),
+                   LinhaSlider(120,tamanho:'tm'),
+                    Padding(
+                      padding: EdgeInsets.only(top: 10),
+                      child: Text('Transparencia Logo'),
+                    ),
+                    LinhaSlider(10)
                   ],
                 ),
             ),
@@ -50,10 +59,8 @@ class PrincipalScreen extends StatelessWidget {
     );
   }
 
-  LinhaSlider(){
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Row(
+  LinhaSlider(double tamanhoSlider,{String tamanho}){
+    return  Row(
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.only(top: 16),
@@ -66,11 +73,15 @@ class PrincipalScreen extends StatelessWidget {
           ),
           Expanded(
             child: FlutterSlider(
-              values: [50],
-              max: 100,
+              values: [tamanhoSlider/2],
+              max: tamanhoSlider,
               min: 0,
               onDragging: (handlerIndex, lowerValue, upperValue) {
-                print(lowerValue);
+                if(tamanho!=null){
+                  _blocImagem.tamanhoLogoSink.add(lowerValue);
+                }else{
+                  _blocImagem.transparenciaLogoSink.add(lowerValue/10);
+                }
               },
             ),
           ),
@@ -84,7 +95,6 @@ class PrincipalScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
     );
   }
 
@@ -95,7 +105,7 @@ class PrincipalScreen extends StatelessWidget {
           if (snapshot.data == null) {
             return Container();
           } else {
-            File imagemLogo = snapshot.data;
+            imagemLogo  = snapshot.data;
             if (snapshot.hasError) return Text('Error: ${snapshot.error}');
             switch (snapshot.connectionState) {
               case ConnectionState.none:
@@ -114,28 +124,23 @@ class PrincipalScreen extends StatelessWidget {
                       case ConnectionState.waiting:
                         return Text('Awaiting bids...');
                       case ConnectionState.active:
-                        return Positioned(
-                          left: position.dx,
-                          top: position.dy - 100 + 20,
-                          child: Draggable(
-                            child: Container(
-                              width: width,
-                              height: height,
-                              decoration: BoxDecoration(image: DecorationImage(image: FileImage(imagemLogo))),
-                            ),
-                            feedback: Container(
-                              decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                image: FileImage(imagemLogo),
-                                colorFilter: new ColorFilter.mode(Colors.white.withOpacity(0.5), BlendMode.dstATop),
-                              )),
-                              width: width,
-                              height: height,
-                            ),
-                            onDraggableCanceled: (Velocity velocity, Offset offset) {
-                              _blocImagem.posicaoLogoSink.add(offset);
-                            },
-                          ),
+                        return StreamBuilder(
+                          stream: _blocImagem.tamanhoLogoStream,
+                          builder: (context,snapshot){
+                            if (snapshot.hasError) return Text('Error: ${snapshot.error}');
+                            switch (snapshot.connectionState) {
+                              case ConnectionState.none:
+                                return Text('Select lot');
+                              case ConnectionState.waiting:
+                                return Text('Awaiting bids...');
+                              case ConnectionState.active:
+                                dimensao = snapshot.data;
+                               return StreamTransparencia();
+                              case ConnectionState.done:
+                                return Text('\$${snapshot.data} (closed)');
+                            }
+                            return Container();
+                          },
                         );
                       case ConnectionState.done:
                         return Text('\$${snapshot.data} (closed)');
@@ -150,6 +155,57 @@ class PrincipalScreen extends StatelessWidget {
           }
         });
   }
+
+
+
+StreamTransparencia(){
+  return StreamBuilder(
+      stream: _blocImagem.transparenciaLogoStream,
+      builder: (context, snapshot) {
+        if (snapshot.data == null)
+          return Container();
+        if (snapshot.hasError) return Text('Error: ${snapshot.error}');
+        switch (snapshot.connectionState) {
+          case ConnectionState.none:
+            return Text('Select lot');
+          case ConnectionState.waiting:
+            return Text('Awaiting bids...');
+          case ConnectionState.active:
+            return Positioned(
+              left: position.dx,
+              top: position.dy - 100 + 20,
+              child: Draggable(
+                child: Container(
+                  decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: FileImage(imagemLogo),
+                        colorFilter: new ColorFilter.mode(Colors.white.withOpacity(snapshot.data), BlendMode.dstATop),
+                      )),
+                  width: dimensao,
+                  height: dimensao,
+                ),
+                feedback:Container(
+                  decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: FileImage(imagemLogo),
+                        colorFilter: new ColorFilter.mode(Colors.white.withOpacity(0.5), BlendMode.dstATop),
+                      )),
+                  width: dimensao,
+                  height: dimensao,
+                ),
+                onDraggableCanceled: (Velocity velocity, Offset offset) {
+                  _blocImagem.posicaoLogoSink.add(offset);
+                },
+              ),
+            );
+          case ConnectionState.done:
+            return Text('\$${snapshot.data} (closed)');
+        }
+        return null;
+      });
+}
+
+
 
   StreamFundoImagem(double altura) {
     return StreamBuilder(
