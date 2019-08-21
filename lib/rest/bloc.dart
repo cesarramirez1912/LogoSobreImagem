@@ -4,27 +4,20 @@ import 'dart:io';
 
 class BlocImagem {
 
-  List<AlignmentGeometry> _listaAlinhamentos = [
-    Alignment.center,
-    Alignment.centerLeft,
-    Alignment.centerRight,
-    Alignment.bottomCenter,
-    Alignment.bottomLeft,
-    Alignment.bottomRight,
-    Alignment.topRight,
-    Alignment.topLeft,
-    Alignment.topCenter,
-  ];
+
 
   File _fundoImagem;
   File _logoImagem;
-  int _contador = 0;
+  Offset position = Offset(0.0, 100.0-20);
 
   final _imagemFundo = StreamController<File>();
   final _imagemLogo = StreamController<File>();
-  final _mudarAlign = StreamController();
+  final _posicaoLogo = StreamController<Offset>();
 
-  Stream get eventoMudarAlignStream => _mudarAlign.stream;
+
+
+  Stream get posicaoLogoStream => _posicaoLogo.stream;
+  StreamSink get posicaoLogoSink => _posicaoLogo.sink;
 
   Stream<File> get imagemLogoStream => _imagemLogo.stream;
   StreamSink<File> get imagemLogoSink => _imagemLogo.sink;
@@ -34,22 +27,13 @@ class BlocImagem {
   StreamSink<File> get imagemFundoSink => _imagemFundo.sink;
 
   BlocImagem(){
-    _mudarAlign.add(_listaAlinhamentos[_contador]);
+    _posicaoLogo.add(position);
     _imagemFundo.add(_fundoImagem);
     _imagemLogo.add(_logoImagem);
   }
 
-  funcaoMudarAlign(){
-    if(_contador>7){
-      _contador = 0;
-    }else{
-      _contador++;
-    }
-    _mudarAlign.add(_listaAlinhamentos[_contador]);
-  }
-
   dispose(){
-    _mudarAlign.close();
+    _posicaoLogo.close();
     _imagemLogo.close();
     _imagemFundo.close();
   }
