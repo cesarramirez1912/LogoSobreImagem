@@ -40,7 +40,16 @@ class PrincipalScreen extends StatelessWidget {
             child: SingleChildScrollView(
                 child: Column(
                   children: <Widget>[
-                   LinhaSlider(),
+                    Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: Text('Tamanho Logo'),
+                    ),
+                   LinhaSlider(100),
+                    Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: Text('Transparencia Logo'),
+                    ),
+                    LinhaSlider(10),
                   ],
                 ),
             ),
@@ -50,10 +59,8 @@ class PrincipalScreen extends StatelessWidget {
     );
   }
 
-  LinhaSlider(){
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Row(
+  LinhaSlider(double tamanhoSlider){
+    return Row(
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.only(top: 16),
@@ -66,11 +73,11 @@ class PrincipalScreen extends StatelessWidget {
           ),
           Expanded(
             child: FlutterSlider(
-              values: [50],
-              max: 100,
+              values: [tamanhoSlider/2],
+              max: tamanhoSlider,
               min: 0,
               onDragging: (handlerIndex, lowerValue, upperValue) {
-                print(lowerValue);
+                _blocImagem.tamanhoLogoSink.add(lowerValue);
               },
             ),
           ),
@@ -84,8 +91,7 @@ class PrincipalScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 
   StreamLogoImagem() {
@@ -114,28 +120,37 @@ class PrincipalScreen extends StatelessWidget {
                       case ConnectionState.waiting:
                         return Text('Awaiting bids...');
                       case ConnectionState.active:
-                        return Positioned(
-                          left: position.dx,
-                          top: position.dy - 100 + 20,
-                          child: Draggable(
-                            child: Container(
-                              width: width,
-                              height: height,
-                              decoration: BoxDecoration(image: DecorationImage(image: FileImage(imagemLogo))),
-                            ),
-                            feedback: Container(
-                              decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                image: FileImage(imagemLogo),
-                                colorFilter: new ColorFilter.mode(Colors.white.withOpacity(0.5), BlendMode.dstATop),
-                              )),
-                              width: width,
-                              height: height,
-                            ),
-                            onDraggableCanceled: (Velocity velocity, Offset offset) {
-                              _blocImagem.posicaoLogoSink.add(offset);
-                            },
-                          ),
+                        return StreamBuilder(
+                          stream: _blocImagem.tamanhoLogoStream,
+                          builder: (context,snapshot){
+                            if(snapshot.data==null){
+                              return Container();
+                            }else{
+                             return Positioned(
+                                left: position.dx,
+                                top: position.dy - 100 + 20,
+                                child: Draggable(
+                                  child: Container(
+                                    width: snapshot.data,
+                                    height: snapshot.data,
+                                    decoration: BoxDecoration(image: DecorationImage(image: FileImage(imagemLogo))),
+                                  ),
+                                  feedback: Container(
+                                    decoration: BoxDecoration(
+                                        image: DecorationImage(
+                                          image: FileImage(imagemLogo),
+                                          colorFilter: new ColorFilter.mode(Colors.white.withOpacity(0.9), BlendMode.dstATop),
+                                        )),
+                                    width: snapshot.data,
+                                    height: snapshot.data,
+                                  ),
+                                  onDraggableCanceled: (Velocity velocity, Offset offset) {
+                                    _blocImagem.posicaoLogoSink.add(offset);
+                                  },
+                                ),
+                              );
+                            }
+                          },
                         );
                       case ConnectionState.done:
                         return Text('\$${snapshot.data} (closed)');
