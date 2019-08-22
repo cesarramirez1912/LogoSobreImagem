@@ -18,7 +18,7 @@ class PrincipalScreen extends StatelessWidget {
     double _alturaTela = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Fundo Selecionado'),
+        title: Text('App Imagem Sobre Logo'),
         actions: <Widget>[
           IconButton(
             onPressed: () => _moreButtom(context),
