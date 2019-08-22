@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,14 +10,15 @@ class PrincipalScreen extends StatelessWidget {
 
   Offset position = Offset(0.0, 20.0);
   double width = 100.0, height = 100.0;
-
+  double dimensao;
+  File imagemLogo;
   @override
   Widget build(BuildContext context) {
     double _larguraTela = MediaQuery.of(context).size.width;
     double _alturaTela = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Fundo Selecionado'),
+        title: Text('Logo sobre imagem'),
         actions: <Widget>[
           IconButton(
             onPressed: () => _moreButtom(context),
@@ -38,20 +38,20 @@ class PrincipalScreen extends StatelessWidget {
             width:_larguraTela,
             height: _alturaTela-380,
             child: SingleChildScrollView(
-                child: Column(
-                  children: <Widget>[
-                    Padding(
-                      padding: EdgeInsets.only(top: 8),
-                      child: Text('Tamanho Logo'),
-                    ),
-                   LinhaSlider(100),
-                    Padding(
-                      padding: EdgeInsets.only(top: 8),
-                      child: Text('Transparencia Logo'),
-                    ),
-                    LinhaSlider(10),
-                  ],
-                ),
+              child: Column(
+                children: <Widget>[
+                  Padding(
+                    padding: EdgeInsets.only(top: 10),
+                    child: Text('Tamanho Logo'),
+                  ),
+                  LinhaSlider(120,tamanho:'tm'),
+                  Padding(
+                    padding: EdgeInsets.only(top: 10),
+                    child: Text('Transparencia Logo'),
+                  ),
+                  LinhaSlider(10)
+                ],
+              ),
             ),
           ),
         ],
@@ -59,39 +59,25 @@ class PrincipalScreen extends StatelessWidget {
     );
   }
 
-  LinhaSlider(double tamanhoSlider){
-    return Row(
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: IconButton(
-              icon: Icon(Icons.arrow_back_ios,size: 14,),
-              onPressed: (){
-
-              },
-            ),
-          ),
-          Expanded(
-            child: FlutterSlider(
-              values: [tamanhoSlider/2],
-              max: tamanhoSlider,
-              min: 0,
-              onDragging: (handlerIndex, lowerValue, upperValue) {
+  LinhaSlider(double tamanhoSlider,{String tamanho}){
+    return  Row(
+      children: <Widget>[
+        Expanded(
+          child: FlutterSlider(
+            values: [tamanhoSlider/2],
+            max: tamanhoSlider,
+            min: 0,
+            onDragging: (handlerIndex, lowerValue, upperValue) {
+              if(tamanho!=null){
                 _blocImagem.tamanhoLogoSink.add(lowerValue);
-              },
-            ),
+              }else{
+                _blocImagem.transparenciaLogoSink.add((lowerValue+1.0)/10);
+              }
+            },
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: IconButton(
-              icon: Icon(Icons.arrow_forward_ios,size: 14),
-              onPressed: (){
-
-              },
-            ),
-          ),
-        ],
-      );
+        ),
+      ],
+    );
   }
 
   StreamLogoImagem() {
@@ -101,13 +87,13 @@ class PrincipalScreen extends StatelessWidget {
           if (snapshot.data == null) {
             return Container();
           } else {
-            File imagemLogo = snapshot.data;
+            imagemLogo  = snapshot.data;
             if (snapshot.hasError) return Text('Error: ${snapshot.error}');
             switch (snapshot.connectionState) {
               case ConnectionState.none:
                 return Text('Select lot');
               case ConnectionState.waiting:
-                return Text('Awaiting bids...');
+                return Container(width: 50,height: 50,child: CircularProgressIndicator(),);
               case ConnectionState.active:
                 return StreamBuilder(
                   stream: _blocImagem.posicaoLogoStream,
@@ -123,33 +109,19 @@ class PrincipalScreen extends StatelessWidget {
                         return StreamBuilder(
                           stream: _blocImagem.tamanhoLogoStream,
                           builder: (context,snapshot){
-                            if(snapshot.data==null){
-                              return Container();
-                            }else{
-                             return Positioned(
-                                left: position.dx,
-                                top: position.dy - 100 + 20,
-                                child: Draggable(
-                                  child: Container(
-                                    width: snapshot.data,
-                                    height: snapshot.data,
-                                    decoration: BoxDecoration(image: DecorationImage(image: FileImage(imagemLogo))),
-                                  ),
-                                  feedback: Container(
-                                    decoration: BoxDecoration(
-                                        image: DecorationImage(
-                                          image: FileImage(imagemLogo),
-                                          colorFilter: new ColorFilter.mode(Colors.white.withOpacity(0.9), BlendMode.dstATop),
-                                        )),
-                                    width: snapshot.data,
-                                    height: snapshot.data,
-                                  ),
-                                  onDraggableCanceled: (Velocity velocity, Offset offset) {
-                                    _blocImagem.posicaoLogoSink.add(offset);
-                                  },
-                                ),
-                              );
+                            if (snapshot.hasError) return Text('Error: ${snapshot.error}');
+                            switch (snapshot.connectionState) {
+                              case ConnectionState.none:
+                                return Text('Select lot');
+                              case ConnectionState.waiting:
+                                return Text('Awaiting bids...');
+                              case ConnectionState.active:
+                                dimensao = snapshot.data;
+                                return StreamTransparencia();
+                              case ConnectionState.done:
+                                return Text('\$${snapshot.data} (closed)');
                             }
+                            return Container();
                           },
                         );
                       case ConnectionState.done:
@@ -165,6 +137,57 @@ class PrincipalScreen extends StatelessWidget {
           }
         });
   }
+
+
+
+  StreamTransparencia(){
+    return StreamBuilder(
+        stream: _blocImagem.transparenciaLogoStream,
+        builder: (context, snapshot) {
+          if (snapshot.data == null)
+            return Container();
+          if (snapshot.hasError) return Text('Error: ${snapshot.error}');
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+              return Text('Select lot');
+            case ConnectionState.waiting:
+              return Text('Awaiting bids...');
+            case ConnectionState.active:
+              return Positioned(
+                left: position.dx,
+                top: position.dy - 100 + 20,
+                child: Draggable(
+                  child: Container(
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: FileImage(imagemLogo),
+                          colorFilter: new ColorFilter.mode(Colors.white.withOpacity(snapshot.data), BlendMode.dstATop),
+                        )),
+                    width: dimensao,
+                    height: dimensao,
+                  ),
+                  feedback:Container(
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: FileImage(imagemLogo),
+                          colorFilter: new ColorFilter.mode(Colors.white.withOpacity(0.5), BlendMode.dstATop),
+                        )),
+                    width: dimensao,
+                    height: dimensao,
+                  ),
+                  onDraggableCanceled: (Velocity velocity, Offset offset) {
+                    _blocImagem.posicaoLogoSink.add(offset);
+                  },
+                ),
+              );
+            case ConnectionState.done:
+              return Text('\$${snapshot.data} (closed)');
+          }
+          return null;
+        });
+  }
+
+
 
   StreamFundoImagem(double altura) {
     return StreamBuilder(
