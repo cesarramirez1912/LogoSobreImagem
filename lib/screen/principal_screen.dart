@@ -18,7 +18,7 @@ class PrincipalScreen extends StatelessWidget {
     double _alturaTela = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
-        title: Text('App Imagem Sobre Logo'),
+        title: Text('Logo sobre imagem'),
         actions: <Widget>[
           IconButton(
             onPressed: () => _moreButtom(context),
@@ -62,15 +62,6 @@ class PrincipalScreen extends StatelessWidget {
   LinhaSlider(double tamanhoSlider,{String tamanho}){
     return  Row(
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: IconButton(
-              icon: Icon(Icons.arrow_back_ios,size: 14,),
-              onPressed: (){
-
-              },
-            ),
-          ),
           Expanded(
             child: FlutterSlider(
               values: [tamanhoSlider/2],
@@ -82,15 +73,6 @@ class PrincipalScreen extends StatelessWidget {
                 }else{
                   _blocImagem.transparenciaLogoSink.add(lowerValue/10);
                 }
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: IconButton(
-              icon: Icon(Icons.arrow_forward_ios,size: 14),
-              onPressed: (){
-
               },
             ),
           ),
@@ -111,7 +93,7 @@ class PrincipalScreen extends StatelessWidget {
               case ConnectionState.none:
                 return Text('Select lot');
               case ConnectionState.waiting:
-                return Text('Awaiting bids...');
+                return Container(width: 50,height: 50,child: CircularProgressIndicator(),);
               case ConnectionState.active:
                 return StreamBuilder(
                   stream: _blocImagem.posicaoLogoStream,
