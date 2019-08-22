@@ -261,7 +261,7 @@ class PrincipalScreen extends StatelessWidget {
               color: Colors.black,
               child: Center(
                 child: Text(
-                  'Nenhuma imagem selecionada',
+                  'Nenhum fundo selecionado',
                   style: TextStyle(color: Colors.white),
                 ),
               ),
