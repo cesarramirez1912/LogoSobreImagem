@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:teste_app/rest/bloc.dart';
 import 'package:flutter_xlider/flutter_xlider.dart';
+import 'dart:async';
 
 class PrincipalScreen extends StatelessWidget {
   BlocImagem _blocImagem = BlocImagem();
@@ -12,6 +13,7 @@ class PrincipalScreen extends StatelessWidget {
   double width = 100.0, height = 100.0;
   double dimensao;
   File imagemLogo;
+
   @override
   Widget build(BuildContext context) {
     double _larguraTela = MediaQuery.of(context).size.width;
@@ -35,16 +37,17 @@ class PrincipalScreen extends StatelessWidget {
             ],
           ),
           Container(
-            width:_larguraTela,
-            height: _alturaTela-380,
+            width: _larguraTela,
+            height: _alturaTela - 380,
             child: SingleChildScrollView(
               child: Column(
                 children: <Widget>[
+                  StreamDxDy(),
                   Padding(
                     padding: EdgeInsets.only(top: 10),
                     child: Text('Tamanho Logo'),
                   ),
-                  LinhaSlider(120,tamanho:'tm'),
+                  LinhaSlider(120, tamanho: 'tm'),
                   Padding(
                     padding: EdgeInsets.only(top: 10),
                     child: Text('Transparencia Logo'),
@@ -59,19 +62,19 @@ class PrincipalScreen extends StatelessWidget {
     );
   }
 
-  LinhaSlider(double tamanhoSlider,{String tamanho}){
-    return  Row(
+  LinhaSlider(double tamanhoSlider, {String tamanho}) {
+    return Row(
       children: <Widget>[
         Expanded(
           child: FlutterSlider(
-            values: [tamanhoSlider/2],
+            values: [tamanhoSlider / 2],
             max: tamanhoSlider,
             min: 0,
             onDragging: (handlerIndex, lowerValue, upperValue) {
-              if(tamanho!=null){
+              if (tamanho != null) {
                 _blocImagem.tamanhoLogoSink.add(lowerValue);
-              }else{
-                _blocImagem.transparenciaLogoSink.add((lowerValue+1.0)/10);
+              } else {
+                _blocImagem.transparenciaLogoSink.add((lowerValue + 1.0) / 10);
               }
             },
           ),
@@ -80,6 +83,119 @@ class PrincipalScreen extends StatelessWidget {
     );
   }
 
+  StreamDxDy(){
+    return StreamBuilder<Offset>(
+      stream: _blocImagem.posicaoLogoStream,
+      builder:(context,snapshot){
+        if(!snapshot.hasData){
+          return Container();
+        }else{
+          position= snapshot.data;
+          return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Column(
+                    children: <Widget>[
+                      IconButton(
+                        icon: Icon(Icons.keyboard_arrow_up),
+                        onPressed: () {
+                          double contador = position.dy;
+                          contador--;
+                          _blocImagem.posicaoLogoSink.add(Offset(position.dx,contador));
+                        },
+                      ),
+                      Text(position.dy.floor().toString()),
+                      IconButton(
+                        icon: Icon(Icons.keyboard_arrow_down),
+                        onPressed: () {
+                          double contador = position.dy;
+                          contador++;
+                          _blocImagem.posicaoLogoSink.add(Offset(position.dx,contador));
+                        },
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: <Widget>[
+                      IconButton(
+                        icon: Icon(Icons.keyboard_arrow_left),
+                        onPressed: () {
+                          double contador = position.dx;
+                          contador--;
+                          _blocImagem.posicaoLogoSink.add(Offset(contador,position.dy));
+                        },
+                      ),
+                      Text(position.dx.floor().toString()),
+                      IconButton(
+                        icon: Icon(Icons.keyboard_arrow_right),
+                        onPressed: () {
+                          double contador = position.dx;
+                          contador++;
+                          _blocImagem.posicaoLogoSink.add(Offset(contador,position.dy));
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              );
+        }
+      });
+  }
+
+//     if (snapshot.data == null) {
+//          return Container();
+//        } else {
+//          if (snapshot.hasError) return Text('Error: ${snapshot.error}');
+//          switch (snapshot.connectionState) {
+//            case ConnectionState.none:
+//              return Text('Select lot');
+//            case ConnectionState.waiting:
+//              return Container(
+//                width: 50,
+//                height: 50,
+//                child: CircularProgressIndicator(),
+//              );
+//            case ConnectionState.active:
+//              return Row(
+//                mainAxisAlignment: MainAxisAlignment.center,
+//                crossAxisAlignment: CrossAxisAlignment.center,
+//                children: <Widget>[
+//                  Column(
+//                    children: <Widget>[
+//                      IconButton(
+//                        icon: Icon(Icons.keyboard_arrow_up),
+//                        onPressed: () {},
+//                      ),
+//                      Text(snapshot.data.toString()),
+//                      IconButton(
+//                        icon: Icon(Icons.keyboard_arrow_down),
+//                        onPressed: () {},
+//                      ),
+//                    ],
+//                  ),
+//                  Row(
+//                    children: <Widget>[
+//                      IconButton(
+//                        icon: Icon(Icons.keyboard_arrow_left),
+//                        onPressed: () {},
+//                      ),
+//                      Text(snapshot.data.toString()),
+//                      IconButton(
+//                        icon: Icon(Icons.keyboard_arrow_right),
+//                        onPressed: () {},
+//                      ),
+//                    ],
+//                  ),
+//                ],
+//              );
+//            case ConnectionState.done:
+//              return Text('\$${snapshot.data} (closed)');
+//          }
+//          return Container();
+//        }
+
+
   StreamLogoImagem() {
     return StreamBuilder(
         stream: _blocImagem.imagemLogoStream,
@@ -87,13 +203,17 @@ class PrincipalScreen extends StatelessWidget {
           if (snapshot.data == null) {
             return Container();
           } else {
-            imagemLogo  = snapshot.data;
+            imagemLogo = snapshot.data;
             if (snapshot.hasError) return Text('Error: ${snapshot.error}');
             switch (snapshot.connectionState) {
               case ConnectionState.none:
                 return Text('Select lot');
               case ConnectionState.waiting:
-                return Container(width: 50,height: 50,child: CircularProgressIndicator(),);
+                return Container(
+                  width: 50,
+                  height: 50,
+                  child: CircularProgressIndicator(),
+                );
               case ConnectionState.active:
                 return StreamBuilder(
                   stream: _blocImagem.posicaoLogoStream,
@@ -108,7 +228,7 @@ class PrincipalScreen extends StatelessWidget {
                       case ConnectionState.active:
                         return StreamBuilder(
                           stream: _blocImagem.tamanhoLogoStream,
-                          builder: (context,snapshot){
+                          builder: (context, snapshot) {
                             if (snapshot.hasError) return Text('Error: ${snapshot.error}');
                             switch (snapshot.connectionState) {
                               case ConnectionState.none:
@@ -138,14 +258,11 @@ class PrincipalScreen extends StatelessWidget {
         });
   }
 
-
-
-  StreamTransparencia(){
+  StreamTransparencia() {
     return StreamBuilder(
         stream: _blocImagem.transparenciaLogoStream,
         builder: (context, snapshot) {
-          if (snapshot.data == null)
-            return Container();
+          if (snapshot.data == null) return Container();
           if (snapshot.hasError) return Text('Error: ${snapshot.error}');
           switch (snapshot.connectionState) {
             case ConnectionState.none:
@@ -160,22 +277,23 @@ class PrincipalScreen extends StatelessWidget {
                   child: Container(
                     decoration: BoxDecoration(
                         image: DecorationImage(
-                          image: FileImage(imagemLogo),
-                          colorFilter: new ColorFilter.mode(Colors.white.withOpacity(snapshot.data), BlendMode.dstATop),
-                        )),
+                      image: FileImage(imagemLogo),
+                      colorFilter: new ColorFilter.mode(Colors.white.withOpacity(snapshot.data), BlendMode.dstATop),
+                    )),
                     width: dimensao,
                     height: dimensao,
                   ),
-                  feedback:Container(
+                  feedback: Container(
                     decoration: BoxDecoration(
                         image: DecorationImage(
-                          image: FileImage(imagemLogo),
-                          colorFilter: new ColorFilter.mode(Colors.white.withOpacity(0.5), BlendMode.dstATop),
-                        )),
+                      image: FileImage(imagemLogo),
+                      colorFilter: new ColorFilter.mode(Colors.white.withOpacity(0.5), BlendMode.dstATop),
+                    )),
                     width: dimensao,
                     height: dimensao,
                   ),
                   onDraggableCanceled: (Velocity velocity, Offset offset) {
+                    position=offset;
                     _blocImagem.posicaoLogoSink.add(offset);
                   },
                 ),
@@ -186,8 +304,6 @@ class PrincipalScreen extends StatelessWidget {
           return null;
         });
   }
-
-
 
   StreamFundoImagem(double altura) {
     return StreamBuilder(

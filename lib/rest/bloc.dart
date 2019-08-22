@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:rxdart/rxdart.dart';
 
 class BlocImagem {
 
@@ -10,11 +11,11 @@ class BlocImagem {
   double _logoTamanho = 60.0;
   double _logoTransparencia = 0.5;
 
-  final _imagemFundo = StreamController<File>();
-  final _imagemLogo = StreamController<File>();
-  final _posicaoLogo = StreamController<Offset>();
-  final _tamanhoLogo = StreamController<double>();
-  final _transparenciaLogo = StreamController<double>();
+  final _imagemFundo = BehaviorSubject<File>();
+  final _imagemLogo = BehaviorSubject<File>();
+  final _posicaoLogo = BehaviorSubject<Offset>();
+  final _tamanhoLogo = BehaviorSubject<double>();
+  final _transparenciaLogo = BehaviorSubject<double>();
 
   Stream get transparenciaLogoStream => _transparenciaLogo.stream;
   StreamSink get transparenciaLogoSink => _transparenciaLogo.sink;
