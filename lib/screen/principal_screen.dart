@@ -74,7 +74,7 @@ class PrincipalScreen extends StatelessWidget {
               if (tamanho != null) {
                 _blocImagem.tamanhoLogoSink.add(lowerValue);
               } else {
-                _blocImagem.transparenciaLogoSink.add((lowerValue + 1.0) / 10);
+                _blocImagem.transparenciaLogoSink.add((lowerValue) / 10);
               }
             },
           ),
@@ -83,118 +83,63 @@ class PrincipalScreen extends StatelessWidget {
     );
   }
 
-  StreamDxDy(){
+  StreamDxDy() {
     return StreamBuilder<Offset>(
-      stream: _blocImagem.posicaoLogoStream,
-      builder:(context,snapshot){
-        if(!snapshot.hasData){
-          return Container();
-        }else{
-          position= snapshot.data;
-          return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+        stream: _blocImagem.posicaoLogoStream,
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return Container();
+          } else {
+            position = snapshot.data;
+            return Padding(
+              padding: const EdgeInsets.only(top: 3, right: 24, left: 24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
-                  Column(
+                  Row(
                     children: <Widget>[
-                      IconButton(
-                        icon: Icon(Icons.keyboard_arrow_up),
-                        onPressed: () {
-                          double contador = position.dy;
-                          contador--;
-                          _blocImagem.posicaoLogoSink.add(Offset(position.dx,contador));
-                        },
-                      ),
+                      Text('X:'),
+                      Botao(
+                          Icon(
+                            Icons.keyboard_arrow_up,
+                            color: Colors.blue,
+                          ),
+                          position.dx,
+                          position.dy - 1),
                       Text(position.dy.floor().toString()),
-                      IconButton(
-                        icon: Icon(Icons.keyboard_arrow_down),
-                        onPressed: () {
-                          double contador = position.dy;
-                          contador++;
-                          _blocImagem.posicaoLogoSink.add(Offset(position.dx,contador));
-                        },
-                      ),
+                      Botao(Icon(Icons.keyboard_arrow_down, color: Colors.blue), position.dx, position.dy + 1),
                     ],
                   ),
                   Row(
                     children: <Widget>[
-                      IconButton(
-                        icon: Icon(Icons.keyboard_arrow_left),
-                        onPressed: () {
-                          double contador = position.dx;
-                          contador--;
-                          _blocImagem.posicaoLogoSink.add(Offset(contador,position.dy));
-                        },
-                      ),
-                      Text(position.dx.floor().toString()),
-                      IconButton(
-                        icon: Icon(Icons.keyboard_arrow_right),
-                        onPressed: () {
-                          double contador = position.dx;
-                          contador++;
-                          _blocImagem.posicaoLogoSink.add(Offset(contador,position.dy));
-                        },
-                      ),
+                      Text('Y:'),
+                      Botao(
+                          Icon(
+                            Icons.keyboard_arrow_left,
+                            color: Colors.blue,
+                          ),
+                          position.dx - 1,
+                          position.dy),
+                      Text((position.dx.floor().toString())),
+                      Botao(Icon(Icons.keyboard_arrow_right, color: Colors.blue), position.dx + 1, position.dy),
                     ],
                   ),
                 ],
-              );
-        }
-      });
+              ),
+            );
+          }
+        });
   }
 
-//     if (snapshot.data == null) {
-//          return Container();
-//        } else {
-//          if (snapshot.hasError) return Text('Error: ${snapshot.error}');
-//          switch (snapshot.connectionState) {
-//            case ConnectionState.none:
-//              return Text('Select lot');
-//            case ConnectionState.waiting:
-//              return Container(
-//                width: 50,
-//                height: 50,
-//                child: CircularProgressIndicator(),
-//              );
-//            case ConnectionState.active:
-//              return Row(
-//                mainAxisAlignment: MainAxisAlignment.center,
-//                crossAxisAlignment: CrossAxisAlignment.center,
-//                children: <Widget>[
-//                  Column(
-//                    children: <Widget>[
-//                      IconButton(
-//                        icon: Icon(Icons.keyboard_arrow_up),
-//                        onPressed: () {},
-//                      ),
-//                      Text(snapshot.data.toString()),
-//                      IconButton(
-//                        icon: Icon(Icons.keyboard_arrow_down),
-//                        onPressed: () {},
-//                      ),
-//                    ],
-//                  ),
-//                  Row(
-//                    children: <Widget>[
-//                      IconButton(
-//                        icon: Icon(Icons.keyboard_arrow_left),
-//                        onPressed: () {},
-//                      ),
-//                      Text(snapshot.data.toString()),
-//                      IconButton(
-//                        icon: Icon(Icons.keyboard_arrow_right),
-//                        onPressed: () {},
-//                      ),
-//                    ],
-//                  ),
-//                ],
-//              );
-//            case ConnectionState.done:
-//              return Text('\$${snapshot.data} (closed)');
-//          }
-//          return Container();
-//        }
-
+  Widget Botao(Icon icone, double dx, double dy, {Color cor = Colors.blue}) {
+    return IconButton(
+      icon: icone,
+      onPressed: () {
+        _blocImagem.posicaoLogoSink.add(Offset(dx, dy));
+      },
+    );
+  }
 
   StreamLogoImagem() {
     return StreamBuilder(
@@ -293,7 +238,7 @@ class PrincipalScreen extends StatelessWidget {
                     height: dimensao,
                   ),
                   onDraggableCanceled: (Velocity velocity, Offset offset) {
-                    position=offset;
+                    position = offset;
                     _blocImagem.posicaoLogoSink.add(offset);
                   },
                 ),
@@ -316,7 +261,7 @@ class PrincipalScreen extends StatelessWidget {
               color: Colors.black,
               child: Center(
                 child: Text(
-                  'File is null',
+                  'Nenhuma imagem selecionada',
                   style: TextStyle(color: Colors.white),
                 ),
               ),
@@ -371,20 +316,53 @@ class PrincipalScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               new ListTile(
-                leading: new Icon(Icons.photo_library),
-                title: new Text('Logo'),
+                leading: new Text('Logo'),
+                title: new Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    IconButton(
+                      icon: Icon(Icons.photo),
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
                 onTap: () {
                   getLogo();
                   Navigator.of(context).pop();
                 },
               ),
               new ListTile(
-                leading: new Icon(Icons.photo),
-                title: new Text('Fundo'),
+                leading: new Text('Fundo'),
+                title: new Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                      children: <Widget>[
+                        IconButton(
+                          icon: Icon(Icons.photo),
+                          onPressed: () {
+                            getImage();
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.add_a_photo),
+                          onPressed: () {
+                            getImage(local: 'camera');
+                            Navigator.of(context).pop();
+                          },
+                        )
+                      ],
+                ),
                 onTap: () {
                   getImage();
                   Navigator.of(context).pop();
                 },
+              ),
+              FlatButton(
+                onPressed: (){
+                  print('Salvar Imagem');
+                },
+                child: Text('Salvar Imagem',style: TextStyle(color: Colors.white),),
+                color: Colors.green,
               ),
             ],
           );
