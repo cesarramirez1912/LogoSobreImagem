@@ -1,65 +1,126 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:teste_app/rest/bloc.dart';
 import 'package:flutter_xlider/flutter_xlider.dart';
 import 'dart:async';
+import 'package:esys_flutter_share/esys_flutter_share.dart';
+import 'dart:ui' as ui;
 
 class PrincipalScreen extends StatelessWidget {
   BlocImagem _blocImagem = BlocImagem();
-
   Offset position = Offset(0.0, 20.0);
   double width = 100.0, height = 100.0;
   double dimensao;
   File imagemLogo;
+
+  bool carregando = false;
+
+  GlobalKey _globalKey = new GlobalKey();
 
   @override
   Widget build(BuildContext context) {
     double _larguraTela = MediaQuery.of(context).size.width;
     double _alturaTela = MediaQuery.of(context).size.height;
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Logo sobre imagem'),
-        actions: <Widget>[
-          IconButton(
-            onPressed: () => _moreButtom(context),
-            icon: Icon(Icons.more_vert),
-          ),
-        ],
-      ),
-      body: Column(
-        children: <Widget>[
-          Stack(
-            children: <Widget>[
-              StreamFundoImagem(_alturaTela),
-              StreamLogoImagem(),
-            ],
-          ),
-          Container(
-            width: _larguraTela,
-            height: _alturaTela - 380,
-            child: SingleChildScrollView(
-              child: Column(
+        appBar: AppBar(
+          title: Text('Logo sobre imagem'),
+          actions: <Widget>[
+            IconButton(
+              onPressed: () => _moreButtom(context),
+              icon: Icon(Icons.more_vert),
+            ),
+          ],
+        ),
+        body: Column(
+          children: <Widget>[
+            RepaintBoundary(
+              key: _globalKey,
+              child: Stack(
                 children: <Widget>[
-                  StreamDxDy(),
-                  Padding(
-                    padding: EdgeInsets.only(top: 10),
-                    child: Text('Tamanho Logo'),
-                  ),
-                  LinhaSlider(120, tamanho: 'tm'),
-                  Padding(
-                    padding: EdgeInsets.only(top: 10),
-                    child: Text('Transparencia Logo'),
-                  ),
-                  LinhaSlider(10)
+                  StreamFundoImagem(_alturaTela),
+                  StreamLogoImagem(),
                 ],
               ),
             ),
-          ),
-        ],
-      ),
+            Container(
+              width: _larguraTela,
+              height: _alturaTela - 380,
+              child: SingleChildScrollView(
+                child: Column(
+                  children: <Widget>[
+                    FlatButton(
+                      child: Text('teste'),
+                        onPressed: () async {
+//                         await _capturePng;
+                         _blocImagem.widgetImagemSink.add(await _capturePng());
+                        },
+                    //  onPressed: () async => await _shareImage()
+                    ),
+                    StreamDxDy(),
+                    Padding(
+                      padding: EdgeInsets.only(top: 10),
+                      child: Text('Tamanho Logo'),
+                    ),
+                    LinhaSlider(120, tamanho: 'tm'),
+                    Padding(
+                      padding: EdgeInsets.only(top: 10),
+                      child: Text('Transparencia Logo'),
+                    ),
+                    LinhaSlider(10),
+                    StreamBuilder(
+                      stream: _blocImagem.widgetImagemStream,
+                      builder:(builder,snapshot){
+                       if(snapshot.data==null){
+                         return Container(
+                           color: Colors.red,
+                           width: 100,
+                           height: 100,
+                         );
+                       }else{
+                         return Container(
+                             child: Image.memory(snapshot.data),
+                             margin: EdgeInsets.all(10));
+                         }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
     );
+  }
+
+  Future<Uint8List> _capturePng() async {
+    try {
+      print('inside');
+      RenderRepaintBoundary boundary =
+      _globalKey.currentContext.findRenderObject();
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData byteData =
+      await image.toByteData(format: ui.ImageByteFormat.png);
+      var pngBytes = byteData.buffer.asUint8List();
+      return pngBytes;
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<void> _shareImage() async {
+    try {
+      final ByteData bytes = await rootBundle.load('assets/image1.png');
+      await Share.file(
+          'esys image', 'esys.png', bytes.buffer.asUint8List(), 'image/png',
+          text: 'My optional text.');
+    } catch (e) {
+      print('error: $e');
+    }
   }
 
   LinhaSlider(double tamanhoSlider, {String tamanho}) {
@@ -108,7 +169,8 @@ class PrincipalScreen extends StatelessWidget {
                           position.dx,
                           position.dy - 1),
                       Text(position.dy.floor().toString()),
-                      Botao(Icon(Icons.keyboard_arrow_down, color: Colors.blue), position.dx, position.dy + 1),
+                      Botao(Icon(Icons.keyboard_arrow_down, color: Colors.blue),
+                          position.dx, position.dy + 1),
                     ],
                   ),
                   Row(
@@ -122,7 +184,10 @@ class PrincipalScreen extends StatelessWidget {
                           position.dx - 1,
                           position.dy),
                       Text((position.dx.floor().toString())),
-                      Botao(Icon(Icons.keyboard_arrow_right, color: Colors.blue), position.dx + 1, position.dy),
+                      Botao(
+                          Icon(Icons.keyboard_arrow_right, color: Colors.blue),
+                          position.dx + 1,
+                          position.dy),
                     ],
                   ),
                 ],
@@ -164,7 +229,8 @@ class PrincipalScreen extends StatelessWidget {
                   stream: _blocImagem.posicaoLogoStream,
                   builder: (context, snapshot) {
                     position = snapshot.data;
-                    if (snapshot.hasError) return Text('Error: ${snapshot.error}');
+                    if (snapshot.hasError)
+                      return Text('Error: ${snapshot.error}');
                     switch (snapshot.connectionState) {
                       case ConnectionState.none:
                         return Text('Select lot');
@@ -174,7 +240,8 @@ class PrincipalScreen extends StatelessWidget {
                         return StreamBuilder(
                           stream: _blocImagem.tamanhoLogoStream,
                           builder: (context, snapshot) {
-                            if (snapshot.hasError) return Text('Error: ${snapshot.error}');
+                            if (snapshot.hasError)
+                              return Text('Error: ${snapshot.error}');
                             switch (snapshot.connectionState) {
                               case ConnectionState.none:
                                 return Text('Select lot');
@@ -223,7 +290,9 @@ class PrincipalScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                         image: DecorationImage(
                       image: FileImage(imagemLogo),
-                      colorFilter: new ColorFilter.mode(Colors.white.withOpacity(snapshot.data), BlendMode.dstATop),
+                      colorFilter: new ColorFilter.mode(
+                          Colors.white.withOpacity(snapshot.data),
+                          BlendMode.dstATop),
                     )),
                     width: dimensao,
                     height: dimensao,
@@ -232,7 +301,8 @@ class PrincipalScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                         image: DecorationImage(
                       image: FileImage(imagemLogo),
-                      colorFilter: new ColorFilter.mode(Colors.white.withOpacity(0.5), BlendMode.dstATop),
+                      colorFilter: new ColorFilter.mode(
+                          Colors.white.withOpacity(0.5), BlendMode.dstATop),
                     )),
                     width: dimensao,
                     height: dimensao,
@@ -301,6 +371,8 @@ class PrincipalScreen extends StatelessWidget {
         });
   }
 
+
+
   void _moreButtom(context) {
     showModalBottomSheet<void>(
         context: context,
@@ -335,22 +407,22 @@ class PrincipalScreen extends StatelessWidget {
                 leading: new Text('Fundo'),
                 title: new Row(
                   mainAxisAlignment: MainAxisAlignment.end,
-                      children: <Widget>[
-                        IconButton(
-                          icon: Icon(Icons.photo),
-                          onPressed: () {
-                            getImage();
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.add_a_photo),
-                          onPressed: () {
-                            getImage(local: 'camera');
-                            Navigator.of(context).pop();
-                          },
-                        )
-                      ],
+                  children: <Widget>[
+                    IconButton(
+                      icon: Icon(Icons.photo),
+                      onPressed: () {
+                        getImage();
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.add_a_photo),
+                      onPressed: () {
+                        getImage(local: 'camera');
+                        Navigator.of(context).pop();
+                      },
+                    )
+                  ],
                 ),
                 onTap: () {
                   getImage();
@@ -358,10 +430,13 @@ class PrincipalScreen extends StatelessWidget {
                 },
               ),
               FlatButton(
-                onPressed: (){
-                  print('Salvar Imagem');
+                onPressed: () {
+
                 },
-                child: Text('Salvar Imagem',style: TextStyle(color: Colors.white),),
+                child: Text(
+                  'Salvar Imagem',
+                  style: TextStyle(color: Colors.white),
+                ),
                 color: Colors.green,
               ),
             ],

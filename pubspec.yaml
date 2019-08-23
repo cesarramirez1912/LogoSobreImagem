@@ -28,6 +28,7 @@ dependencies:
   dotted_border: ^1.0.2
   flutter_xlider: ^2.5.2
   rxdart: ^0.22.1+1
+  esys_flutter_share: ^1.0.2
 
 
 dev_dependencies:

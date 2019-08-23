@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:io';
@@ -16,6 +18,10 @@ class BlocImagem {
   final _posicaoLogo = BehaviorSubject<Offset>();
   final _tamanhoLogo = BehaviorSubject<double>();
   final _transparenciaLogo = BehaviorSubject<double>();
+  final _widgetImagem = BehaviorSubject<Uint8List>();
+
+  Stream get widgetImagemStream => _widgetImagem.stream;
+  StreamSink get widgetImagemSink => _widgetImagem.sink;
 
   Stream get transparenciaLogoStream => _transparenciaLogo.stream;
   StreamSink get transparenciaLogoSink => _transparenciaLogo.sink;
